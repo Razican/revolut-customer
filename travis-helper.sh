@@ -36,11 +36,7 @@ elif [ "$action" = "upload_code_coverage" ]; then
     sudo make install &&
     cd ../.. &&
     rm -rf kcov-master &&
-    for file in target/debug/amount-*[^\.d]
-                target/debug/lib-*[^\.d]
-                target/debug/private-*[^\.d]
-                target/debug/public-*[^\.d]
-                target/debug/revolut_customer-*[^\.d]; do
+    for file in target/debug/amount-*[^\.d] target/debug/lib-*[^\.d] target/debug/private-*[^\.d] target/debug/public-*[^\.d] target/debug/revolut_customer-*[^\.d]; do
       mkdir -p "target/cov/$(basename $file)";
       kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file";
     done &&
