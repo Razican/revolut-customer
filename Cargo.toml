@@ -23,6 +23,10 @@ serde_derive = "1.0.82"
 version = "0.4.6"
 features = ["serde"]
 
+[dependencies.uuid]
+version = "0.7.1"
+features = ["serde"]
+
 [dev-dependencies]
 dotenv = "0.13.0"
 

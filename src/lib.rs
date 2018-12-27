@@ -29,7 +29,7 @@ extern crate failure;
 
 pub mod amount;
 pub mod error;
-mod private;
+pub mod private;
 mod public;
 
 use lazy_static::lazy_static;
