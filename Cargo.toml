@@ -1,8 +1,15 @@
 [package]
 name = "revolut_customer"
 version = "0.1.0"
+license = "MIT/Apache-2.0"
 authors = ["Razican <razican@protonmail.ch>"]
 edition = "2018"
+repository = "https://github.com/Razican/revolut-customer"
+description = """
+Reverse engineered Revolut customer API.
+"""
+keywords = ["revolut", "api"]
+categories = ["api-bindings"]
 
 [dependencies]
 reqwest = "0.9.5"
