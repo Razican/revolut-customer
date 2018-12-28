@@ -11,6 +11,13 @@ Reverse engineered Revolut customer API.
 keywords = ["revolut", "api"]
 categories = ["api-bindings"]
 
+[badges]
+travis-ci = { repository = "Razican/revolut-customer", branch = "master" }
+codecov = { repository = "Razican/revolut-customer", branch = "master", service = "github" }
+is-it-maintained-issue-resolution = { repository = "Razican/revolut-customer" }
+is-it-maintained-open-issues = { repository = "Razican/revolut-customer" }
+maintenance = { status = "experimental" }
+
 [dependencies]
 reqwest = "0.9.5"
 failure = "0.1.3"
