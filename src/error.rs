@@ -15,6 +15,12 @@ pub enum Api {
     /// Unauthorized use of the API.
     #[fail(display = "unauthorized use of the API")]
     Unauthorized,
+    /// The client had not logged in.
+    #[fail(display = "the client had not logged in")]
+    NotLoggedIn,
+    /// Invalid user ID.
+    #[fail(display = "the provided user ID is not a valid UUID")]
+    InvalidUserId,
     /// Failure performing the request.
     #[fail(display = "failure performing the request")]
     RequestFailure,

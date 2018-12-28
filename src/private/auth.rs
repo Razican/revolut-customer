@@ -4,19 +4,8 @@ use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use reqwest::{StatusCode, Url};
 
-use super::{AccessToken, User, Wallet};
+use super::{User, Wallet};
 use crate::{error, Client, BASE_API_URL};
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignInResponse {
-    /// User information.
-    user: User,
-    /// Wallet information.
-    wallet: Wallet,
-    /// Access token.
-    access_token: AccessToken,
-}
 
 /// Authorization client methods
 impl Client {
@@ -64,11 +53,22 @@ impl Client {
     }
 
     /// Signs the user in.
-    pub fn confirm_sign_in<P, C>(&self, phone: P, code: C) -> Result<SignInResponse, Error>
+    pub fn confirm_sign_in<P, C>(&mut self, phone: P, code: C) -> Result<(User, Wallet), Error>
     where
         P: AsRef<str>,
         C: AsRef<str>,
     {
+        #[derive(Debug, Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        pub struct SignInResponse {
+            /// User information.
+            user: User,
+            /// Wallet information.
+            wallet: Wallet,
+            /// Access token.
+            access_token: String,
+        }
+
         /// Data to send to the endpoint in the JSON body.
         #[derive(Debug, Serialize)]
         struct Data<'d> {
@@ -87,17 +87,18 @@ impl Client {
         };
 
         let request_builder = self.client.post(URL.clone());
+        let request_builder = self.set_headers(request_builder).json(&data);
 
-        let mut response = self
-            .set_headers(request_builder)
-            .json(&data)
-            .send()
-            .context(error::Api::RequestFailure)?;
+        eprintln!("req: {:?}", request_builder);
 
-        eprintln!("{}", response.status());
+        let mut response = request_builder.send().context(error::Api::RequestFailure)?;
 
         if response.status().is_success() {
-            Ok(response.json().context(error::Api::ParseResponse)?)
+            let res_structure: SignInResponse =
+                response.json().context(error::Api::ParseResponse)?;
+            self.user_id = Some(res_structure.user.id);
+            self.access_token = Some(res_structure.access_token);
+            Ok((res_structure.user, res_structure.wallet))
         } else if response.status() == StatusCode::UNAUTHORIZED {
             Err(error::Api::Unauthorized.into())
         } else {

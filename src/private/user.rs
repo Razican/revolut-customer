@@ -7,177 +7,254 @@ use reqwest::{header::ACCEPT, StatusCode, Url};
 use serde::Deserializer;
 use uuid::Uuid;
 
-use super::{AccessToken, Address, User, Wallet};
+use super::{Address, User, Wallet};
 use crate::{amount::Amount, error, Client, BASE_API_URL};
 
-/// Response to the `current_user()` method.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CurrentUserResponse {
-    /// User information.
-    user: User,
-    /// Wallet information.
-    wallet: Wallet,
-}
-
-/// User client methods
+/// User client methods.
+///
+/// They require the client to have loaded the authentication mechanisms.
 impl Client {
     /// Gets user information.
-    pub fn current_user<I>(
-        &self,
-        user_id: I,
-        access_token: &AccessToken,
-    ) -> Result<CurrentUserResponse, Error>
-    where
-        I: AsRef<str>,
-    {
-        lazy_static! {
-            /// URL of the endpoint.
-            static ref URL: Url = BASE_API_URL.join("user/current").unwrap();
-        }
-
-        let request_builder = self.client.get(URL.clone());
-
-        let mut response = self
-            .set_headers(request_builder)
-            .header(ACCEPT, "application/json")
-            .basic_auth(user_id.as_ref(), Some(&access_token.token))
-            .send()
-            .context(error::Api::RequestFailure)?;
-
-        if response.status().is_success() {
-            Ok(response.json().context(error::Api::ParseResponse)?)
-        } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
-        } else {
-            Err(error::Api::Other {
-                status_code: response.status(),
+    ///
+    /// Make sure the client has the authentication information.
+    pub fn current_user(&self) -> Result<(User, Wallet), Error> {
+        if let (&Some(ref user_id), &Some(ref access_token)) = (&self.user_id, &self.access_token) {
+            /// Response to the `current_user()` method.
+            #[derive(Debug, Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            pub struct CurrentUserResponse {
+                /// User information.
+                user: User,
+                /// Wallet information.
+                wallet: Wallet,
             }
-            .into())
+
+            lazy_static! {
+                /// URL of the endpoint.
+                static ref URL: Url = BASE_API_URL.join("user/current").unwrap();
+            }
+
+            let request_builder = self.client.get(URL.clone());
+
+            let mut response = self
+                .set_headers(request_builder)
+                .header(ACCEPT, "application/json")
+                .basic_auth(&user_id, Some(access_token))
+                .send()
+                .context(error::Api::RequestFailure)?;
+
+            if response.status().is_success() {
+                let res_structure: CurrentUserResponse =
+                    response.json().context(error::Api::ParseResponse)?;
+                Ok((res_structure.user, res_structure.wallet))
+            } else if response.status() == StatusCode::UNAUTHORIZED {
+                Err(error::Api::Unauthorized.into())
+            } else {
+                Err(error::Api::Other {
+                    status_code: response.status(),
+                }
+                .into())
+            }
+        } else {
+            Err(error::Api::NotLoggedIn.into())
         }
     }
 
     /// Gets user's wallet information.
-    pub fn current_user_wallet<I>(
-        &self,
-        user_id: I,
-        access_token: &AccessToken,
-    ) -> Result<Wallet, Error>
-    where
-        I: AsRef<str>,
-    {
-        lazy_static! {
-            /// URL of the endpoint.
-            static ref URL: Url = BASE_API_URL.join("user/current/wallet").unwrap();
-        }
-
-        let request_builder = self.client.get(URL.clone());
-
-        let mut response = self
-            .set_headers(request_builder)
-            .header(ACCEPT, "application/json")
-            .basic_auth(user_id.as_ref(), Some(&access_token.token))
-            .send()
-            .context(error::Api::RequestFailure)?;
-
-        if response.status().is_success() {
-            Ok(response.json().context(error::Api::ParseResponse)?)
-        } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
-        } else {
-            Err(error::Api::Other {
-                status_code: response.status(),
+    ///
+    /// Make sure the client has the authentication information.
+    pub fn current_user_wallet(&self) -> Result<Wallet, Error> {
+        if let (&Some(ref user_id), &Some(ref access_token)) = (&self.user_id, &self.access_token) {
+            lazy_static! {
+                /// URL of the endpoint.
+                static ref URL: Url = BASE_API_URL.join("user/current/wallet").unwrap();
             }
-            .into())
+
+            let request_builder = self.client.get(URL.clone());
+
+            let mut response = self
+                .set_headers(request_builder)
+                .header(ACCEPT, "application/json")
+                .basic_auth(user_id, Some(&access_token))
+                .send()
+                .context(error::Api::RequestFailure)?;
+
+            if response.status().is_success() {
+                Ok(response.json().context(error::Api::ParseResponse)?)
+            } else if response.status() == StatusCode::UNAUTHORIZED {
+                Err(error::Api::Unauthorized.into())
+            } else {
+                Err(error::Api::Other {
+                    status_code: response.status(),
+                }
+                .into())
+            }
+        } else {
+            Err(error::Api::NotLoggedIn.into())
         }
     }
 
     /// Gets user's cards information.
-    pub fn current_user_cards<I>(
-        &self,
-        user_id: I,
-        access_token: &AccessToken,
-    ) -> Result<Vec<Card>, Error>
-    where
-        I: AsRef<str>,
-    {
-        lazy_static! {
-            /// URL of the endpoint.
-            static ref URL: Url = BASE_API_URL.join("user/current/cards").unwrap();
-        }
-
-        let request_builder = self.client.get(URL.clone());
-
-        let mut response = self
-            .set_headers(request_builder)
-            .header(ACCEPT, "application/json")
-            .basic_auth(user_id.as_ref(), Some(&access_token.token))
-            .send()
-            .context(error::Api::RequestFailure)?;
-
-        //panic!("{}", response.text().unwrap());
-
-        if response.status().is_success() {
-            Ok(response.json().context(error::Api::ParseResponse)?)
-        } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
-        } else {
-            Err(error::Api::Other {
-                status_code: response.status(),
+    ///
+    /// Make sure the client has the authentication information.
+    pub fn current_user_cards(&self) -> Result<Vec<Card>, Error> {
+        if let (&Some(ref user_id), &Some(ref access_token)) = (&self.user_id, &self.access_token) {
+            lazy_static! {
+                /// URL of the endpoint.
+                static ref URL: Url = BASE_API_URL.join("user/current/cards").unwrap();
             }
-            .into())
+
+            let request_builder = self.client.get(URL.clone());
+
+            let mut response = self
+                .set_headers(request_builder)
+                .header(ACCEPT, "application/json")
+                .basic_auth(user_id, Some(&access_token))
+                .send()
+                .context(error::Api::RequestFailure)?;
+
+            //panic!("{}", response.text().unwrap());
+
+            if response.status().is_success() {
+                Ok(response.json().context(error::Api::ParseResponse)?)
+            } else if response.status() == StatusCode::UNAUTHORIZED {
+                Err(error::Api::Unauthorized.into())
+            } else {
+                Err(error::Api::Other {
+                    status_code: response.status(),
+                }
+                .into())
+            }
+        } else {
+            Err(error::Api::NotLoggedIn.into())
         }
     }
 }
 
 /// Credit card representation.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct Card {
+    /// Card ID.
+    #[get]
+    #[deref]
     id: Uuid,
+    /// Owner's user ID.
+    #[get = "pub"]
+    #[deref]
     owner_id: Uuid,
+    /// Last four digits of the card.
+    #[get = "pub"]
     last_four: String,
+    /// Brand of the card.
+    #[get = "pub"]
     brand: String, // TODO: enum
+    /// Expiry date of the card.
     #[serde(deserialize_with = "deserialize_card_expiry_date")]
+    #[get = "pub"]
+    #[deref]
     expiry_date: NaiveDate, // TODO, only month and year
+    /// Wether the card is expired.
+    #[get = "pub"]
+    #[deref]
     expired: bool,
+    /// Unknown.
+    #[get = "pub"]
+    #[deref]
     three_d_verified: bool,
+    /// Address associated with the card.
+    #[get = "pub"]
     address: Address,
+    /// Post code associated with the card.
+    #[get = "pub"]
     postcode: Option<String>,
+    /// Issuer of the card.
+    #[get = "pub"]
     issuer: Issuer,
+    /// Currency of the card.
+    #[get = "pub"]
     currency: String, // TODO: enum
+    /// Wether the card is confirmed.
+    #[get = "pub"]
+    #[deref]
     confirmed: bool,
+    /// Number of attempts performed to confirm the card.
+    #[get = "pub"]
+    #[deref]
     confirmation_attempts: u8,
+    /// Auto-topup status.
+    #[get = "pub"]
     auto_topup: String, // TODO: enum
+    /// Reason for the auto-topup status.
+    #[get = "pub"]
     auto_topup_reason: String,
+    /// Card creation date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
+    #[get = "pub"]
+    #[deref]
     created_date: DateTime<Utc>,
+    /// Card update date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
+    #[get = "pub"]
+    #[deref]
     updated_date: DateTime<Utc>,
+    /// Type of the associated bank.
+    #[get = "pub"]
     associated_bank_type: String, // TODO: enum
+    /// Last time used.
     #[serde(with = "chrono::serde::ts_milliseconds")]
+    #[get = "pub"]
+    #[deref]
     last_used_date: DateTime<Utc>,
+    /// Current topup amount.
+    #[get = "pub"]
+    #[deref]
     current_topup: Amount, // TODO: Make sure this is an amount
+    /// Credit repayment.
+    #[get = "pub"]
+    #[deref]
     credit_repayment: bool,
 }
 
 /// Credit card issuer information.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
+    /// Bank Identification Number
+    #[get = "pub"]
     bin: String,
+    /// Name of the issuer.
+    #[get = "pub"]
     name: Option<String>,
+    /// Type of card.
+    #[get = "pub"]
+    #[deref]
     card_type: CardType,
+    /// Brand of the card.
+    #[get = "pub"]
     card_brand: String, // TODO: enum
-    country: String,    // TODO: enum
-    currency: String,   // TODO: enum
+    /// Country of the card.
+    #[get = "pub"]
+    country: String, // TODO: enum
+    /// Currency of the card.
+    #[get = "pub"]
+    currency: String, // TODO: enum
+    /// Wether the card is supported.
+    #[get = "pub"]
+    #[deref]
     supported: bool,
+    /// Fee for using the card.
+    #[get = "pub"]
+    #[deref]
     fee: f64,
+    /// Wether the postcode is required for operation.
+    #[get = "pub"]
+    #[deref]
     postcode_required: bool,
 }
 
 /// Card type.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum CardType {
     /// Credit card.
