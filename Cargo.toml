@@ -29,9 +29,8 @@ features = ["serde"]
 
 [dependencies.getset]
 version = "0.0.6"
-path = "../../getset"
-# git = "https://github.com/Razican/getset"
-# branc = "deref"
+git = "https://github.com/Razican/getset"
+branch = "deref"
 
 [dev-dependencies]
 dotenv = "0.13.0"
