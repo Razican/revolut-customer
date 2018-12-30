@@ -10,6 +10,41 @@ use crate::{error, Client, BASE_API_URL};
 /// Authorization client methods
 impl Client {
     /// Signs the user in.
+    ///
+    /// **Example:**
+    ///
+    /// ```rust
+    /// use revolut_customer::{Client, error};
+    ///
+    /// let client = Client::default();
+    /// let response = client.sign_in("+1555555555", "9999");
+    /// assert_eq!(response.err().unwrap().downcast_ref::<error::Api>().unwrap(),
+    ///            &error::Api::Unauthorized);
+    /// ```
+    ///
+    /// Note that the response will be an unauthorized error, since the phone/password combination
+    /// is not correct.
+    ///
+    /// ## Request API specification
+    ///
+    /// No authentication required.
+    ///
+    /// ```text
+    /// GET https://api.revolut.com/signin
+    /// ```
+    ///
+    /// **Body (JSON encoded):**
+    ///
+    /// ```json
+    /// {
+    ///     "phone": "+1555555555",
+    ///     "password": "9999"
+    /// }
+    /// ```
+    ///
+    /// The response status code will be in the `2XX` range if the phone/password were correct, or
+    /// in the `4XX` range if they weren't or the API changed. The response will not have further
+    /// information.
     pub fn sign_in<PH, PW>(&self, phone: PH, password: PW) -> Result<(), Error>
     where
         PH: AsRef<str>,
@@ -52,12 +87,53 @@ impl Client {
         }
     }
 
-    /// Signs the user in.
+    /// Confirms the user sign-in.
+    ///
+    /// **Example:**
+    ///
+    /// ```rust
+    /// use revolut_customer::{Client, error};
+    ///
+    /// let client = Client::default();
+    /// let response = client.confirm_sign_in("+1555555555", "111-111");
+    /// assert_eq!(response.err().unwrap().downcast_ref::<error::Api>().unwrap(),
+    ///            &error::Api::Unauthorized);
+    /// ```
+    ///
+    /// Note that the response will be an unauthorized error, since the phone/code combination
+    /// is not correct.
+    ///
+    /// ## Request API specification
+    ///
+    /// No authentication required.
+    ///
+    /// ```text
+    /// GET https://api.revolut.com/signin/confirm
+    /// ```
+    ///
+    /// **Body (JSON encoded):**
+    ///
+    /// ```json
+    /// {
+    ///     "phone": "+1555555555",
+    ///     "code": "111-111"
+    /// }
+    /// ```
+    ///
+    /// The response status code will be in the `2XX` range if the phone/password were correct, or
+    /// in the `4XX` range if they weren't or the API changed. If the response is correct, a JSON
+    /// object containing the user, wallet and access token for the user si returned. The
+    /// implementation only returns the user and wallet objects, and saves the access token and
+    /// user ID to authenticate in future requests.
+    ///
+    /// The definitions for these objects is shown in the methods that specifically return each of
+    /// the types.
     pub fn confirm_sign_in<P, C>(&mut self, phone: P, code: C) -> Result<(User, Wallet), Error>
     where
         P: AsRef<str>,
         C: AsRef<str>,
     {
+        /// Response of the sign-in mechanism.
         #[derive(Debug, Deserialize)]
         #[serde(rename_all = "camelCase")]
         pub struct SignInResponse {
@@ -88,8 +164,6 @@ impl Client {
 
         let request_builder = self.client.post(URL.clone());
         let request_builder = self.set_headers(request_builder).json(&data);
-
-        eprintln!("req: {:?}", request_builder);
 
         let mut response = request_builder.send().context(error::Api::RequestFailure)?;
 

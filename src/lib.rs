@@ -103,7 +103,47 @@ impl Options {
     }
 }
 
-/// API client structure.
+/// API client.
+///
+/// TODO: Client examples
+///
+/// ## Request API specification
+///
+/// The API is not publicly available, but reverse engineering what the Revolut iPhone/Android
+/// clients do, the following has been determined:
+///
+/// **Headers:**
+///
+/// The headers set by the application are the following:
+///
+/// ```text
+/// X-Client-Version: client.version
+/// X-Api-Version: 1
+/// X-Device-Id: YOUR-DEVICE-ID
+/// X-Device-Model: DeviceModel
+/// User-Agent: AppUserAgent
+/// Accept: application/json
+/// ```
+///
+/// The client sets the following defaults for the iPhone configuration:
+///
+/// ```text
+/// X-Client-Version: 5.29
+/// X-Api-Version: 1
+/// X-Device-Id: SOME-DEVICE-ID
+/// X-Device-Model: iPhone8,1
+/// User-Agent: Revolut/com.revolut.revolut (iPhone; iOS 11.1)
+/// Accept: application/json
+/// ```
+///
+/// For the authenticated APIs, it uses simple authentication with the User ID as the user and the
+/// access token as the password, adding the header:
+///
+/// ```text
+/// Authorization: Basic e3Jldm9sdXQtdXNlci1pZH06e0FjY2Vzc1Rva2VufQ==
+/// ```
+///
+/// The last part is the Base64 encoding of the `{revolut-user-id}:{AccessToken}` pair.
 #[derive(Debug, Clone)]
 pub struct Client {
     /// Options for the client.
