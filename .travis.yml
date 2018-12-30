@@ -51,6 +51,19 @@ jobs:
       on:
         repo: Razican/revolut-customer
         branch: develop
+  # Crates.io deployment
+  - name: "crates.io deployment"
+    os: linux
+    rust: stable
+    stage: deploy
+    env: CACHE_NAME=DEPLOY
+    script: skip
+    deploy:
+      provider: cargo
+      token: $CARGO_TOKEN
+      on:
+        repo: Razican/revolut-customer
+        tags: true
 
 matrix:
   allow_failures:
