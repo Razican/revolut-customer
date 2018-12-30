@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["MAX","Largest possible currency amount."],["MIN","Smallest possible currency amount"],["_IMPL_DESERIALIZE_FOR_Amount",""],["_IMPL_SERIALIZE_FOR_Amount",""]],"struct":[["Amount","Revolut currency amount"]]});

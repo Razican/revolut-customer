@@ -1,0 +1,10 @@
+(function() {var implementors = {};
+implementors["revolut_customer"] = [{text:"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/ops/arith/trait.DivAssign.html\" title=\"trait core::ops::arith::DivAssign\">DivAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>&gt; for <a class=\"struct\" href=\"revolut_customer/amount/struct.Amount.html\" title=\"struct revolut_customer::amount::Amount\">Amount</a>",synthetic:false,types:["revolut_customer::amount::Amount"]},{text:"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/ops/arith/trait.DivAssign.html\" title=\"trait core::ops::arith::DivAssign\">DivAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u16.html\">u16</a>&gt; for <a class=\"struct\" href=\"revolut_customer/amount/struct.Amount.html\" title=\"struct revolut_customer::amount::Amount\">Amount</a>",synthetic:false,types:["revolut_customer::amount::Amount"]},{text:"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/ops/arith/trait.DivAssign.html\" title=\"trait core::ops::arith::DivAssign\">DivAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u32.html\">u32</a>&gt; for <a class=\"struct\" href=\"revolut_customer/amount/struct.Amount.html\" title=\"struct revolut_customer::amount::Amount\">Amount</a>",synthetic:false,types:["revolut_customer::amount::Amount"]},{text:"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/ops/arith/trait.DivAssign.html\" title=\"trait core::ops::arith::DivAssign\">DivAssign</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u64.html\">u64</a>&gt; for <a class=\"struct\" href=\"revolut_customer/amount/struct.Amount.html\" title=\"struct revolut_customer::amount::Amount\">Amount</a>",synthetic:false,types:["revolut_customer::amount::Amount"]},];
+
+            if (window.register_implementors) {
+                window.register_implementors(implementors);
+            } else {
+                window.pending_implementors = implementors;
+            }
+        
+})()

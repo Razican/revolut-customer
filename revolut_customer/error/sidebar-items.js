@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["_DERIVE_failure_Fail_FOR_AmountParse",""],["_DERIVE_failure_Fail_FOR_Api",""],["_DERIVE_failure_core_fmt_Display_FOR_AmountParse",""],["_DERIVE_failure_core_fmt_Display_FOR_Api",""]],"enum":[["Api","API error."]],"struct":[["AmountParse","Revolut amount parse error."]]});
