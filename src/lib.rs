@@ -2,6 +2,8 @@
 //!
 //! This crate is meant to interact with the Revolut customer API, not to be confused with the
 //! business API. This API is not public, and therefore it's subject to change.
+//!
+//! The HTTP API is documented for each method in the [`Client`](struct.Client.html) type.
 
 #![forbid(anonymous_parameters)]
 #![warn(clippy::pedantic)]

@@ -89,19 +89,21 @@ impl Client {
 
     /// Confirms the user sign-in.
     ///
+    /// This will set the client with the user ID and the access token so that it can perform
+    /// further requests that require authentication. That's the reason why the client needs to be
+    /// mutable.
+    ///
     /// **Example:**
     ///
     /// ```rust
     /// use revolut_customer::{Client, error};
     ///
-    /// let client = Client::default();
+    /// let mut client = Client::default();
     /// let response = client.confirm_sign_in("+1555555555", "111-111");
-    /// assert_eq!(response.err().unwrap().downcast_ref::<error::Api>().unwrap(),
-    ///            &error::Api::Unauthorized);
+    /// assert!(response.is_err());
     /// ```
     ///
-    /// Note that the response will be an unauthorized error, since the phone/code combination
-    /// is not correct.
+    /// Note that the response will be a 400 error, since the phone/code combination is not correct.
     ///
     /// ## Request API specification
     ///
@@ -120,8 +122,8 @@ impl Client {
     /// }
     /// ```
     ///
-    /// The response status code will be in the `2XX` range if the phone/password were correct, or
-    /// in the `4XX` range if they weren't or the API changed. If the response is correct, a JSON
+    /// The response status code will be in the `2XX` range if the phone/code were correct, or in
+    /// the `4XX` range if they weren't or the API changed. If the response is correct, a JSON
     /// object containing the user, wallet and access token for the user si returned. The
     /// implementation only returns the user and wallet objects, and saves the access token and
     /// user ID to authenticate in future requests.
