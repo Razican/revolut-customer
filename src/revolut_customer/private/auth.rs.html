@@ -185,15 +185,21 @@
 <span id="185">185</span>
 <span id="186">186</span>
 <span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Authorization methods of the API.</span>
 
 <span class="kw">use</span> <span class="ident">failure</span>::{<span class="ident">Error</span>, <span class="ident">ResultExt</span>};
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
 <span class="kw">use</span> <span class="ident">reqwest</span>::{<span class="ident">StatusCode</span>, <span class="ident">Url</span>};
+<span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">User</span>, <span class="ident">Wallet</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">error</span>, <span class="ident">Client</span>, <span class="ident">BASE_API_URL</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">ApiError</span>, <span class="ident">Client</span>, <span class="ident">ErrResponse</span>, <span class="ident">BASE_API_URL</span>};
 
 <span class="doccomment">/// Authorization client methods</span>
 <span class="kw">impl</span> <span class="ident">Client</span> {
@@ -202,12 +208,12 @@
     <span class="doccomment">/// **Example:**</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use revolut_customer::{Client, error};</span>
+    <span class="doccomment">/// use revolut_customer::{Client, ApiError};</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// let client = Client::default();</span>
     <span class="doccomment">/// let response = client.sign_in(&quot;+1555555555&quot;, &quot;9999&quot;);</span>
-    <span class="doccomment">/// assert_eq!(response.err().unwrap().downcast_ref::&lt;error::Api&gt;().unwrap(),</span>
-    <span class="doccomment">///            &amp;error::Api::Unauthorized);</span>
+    <span class="doccomment">/// assert_eq!(response.err().unwrap().downcast_ref::&lt;ApiError&gt;().unwrap(),</span>
+    <span class="doccomment">///            &amp;ApiError::Unauthorized);</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Note that the response will be an unauthorized error, since the phone/password combination</span>
@@ -261,14 +267,14 @@
             .<span class="ident">set_headers</span>(<span class="ident">request_builder</span>)
             .<span class="ident">json</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>)
             .<span class="ident">send</span>()
-            .<span class="ident">context</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">RequestFailure</span>)<span class="question-mark">?</span>;
+            .<span class="ident">context</span>(<span class="ident">ApiError</span>::<span class="ident">RequestFailure</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">status</span>().<span class="ident">is_success</span>() {
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">status</span>() <span class="op">==</span> <span class="ident">StatusCode</span>::<span class="ident">UNAUTHORIZED</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">Unauthorized</span>.<span class="ident">into</span>())
+            <span class="prelude-val">Err</span>(<span class="ident">ApiError</span>::<span class="ident">Unauthorized</span>.<span class="ident">into</span>())
         } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">Other</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">ApiError</span>::<span class="ident">Other</span> {
                 <span class="ident">status_code</span>: <span class="ident">response</span>.<span class="ident">status</span>(),
             }
             .<span class="ident">into</span>())
@@ -284,7 +290,7 @@
     <span class="doccomment">/// **Example:**</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use revolut_customer::{Client, error};</span>
+    <span class="doccomment">/// use revolut_customer::{Client, ApiError};</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// let mut client = Client::default();</span>
     <span class="doccomment">/// let response = client.confirm_sign_in(&quot;+1555555555&quot;, &quot;111-111&quot;);</span>
@@ -315,9 +321,6 @@
     <span class="doccomment">/// object containing the user, wallet and access token for the user si returned. The</span>
     <span class="doccomment">/// implementation only returns the user and wallet objects, and saves the access token and</span>
     <span class="doccomment">/// user ID to authenticate in future requests.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The definitions for these objects is shown in the methods that specifically return each of</span>
-    <span class="doccomment">/// the types.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">confirm_sign_in</span><span class="op">&lt;</span><span class="ident">P</span>, <span class="ident">C</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">phone</span>: <span class="ident">P</span>, <span class="ident">code</span>: <span class="ident">C</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">User</span>, <span class="ident">Wallet</span>), <span class="ident">Error</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">P</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span>,
@@ -355,18 +358,25 @@
         <span class="kw">let</span> <span class="ident">request_builder</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">post</span>(<span class="ident">URL</span>.<span class="ident">clone</span>());
         <span class="kw">let</span> <span class="ident">request_builder</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">set_headers</span>(<span class="ident">request_builder</span>).<span class="ident">json</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>);
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">request_builder</span>.<span class="ident">send</span>().<span class="ident">context</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">RequestFailure</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">response</span> <span class="op">=</span> <span class="ident">request_builder</span>.<span class="ident">send</span>().<span class="ident">context</span>(<span class="ident">ApiError</span>::<span class="ident">RequestFailure</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">status</span>().<span class="ident">is_success</span>() {
-            <span class="kw">let</span> <span class="ident">res_structure</span>: <span class="ident">SignInResponse</span> <span class="op">=</span>
-                <span class="ident">response</span>.<span class="ident">json</span>().<span class="ident">context</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">ParseResponse</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">res_structure</span>: <span class="ident">SignInResponse</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">json</span>().<span class="ident">context</span>(<span class="ident">ApiError</span>::<span class="ident">ParseResponse</span>)<span class="question-mark">?</span>;
             <span class="self">self</span>.<span class="ident">user_id</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">res_structure</span>.<span class="ident">user</span>.<span class="ident">id</span>);
             <span class="self">self</span>.<span class="ident">access_token</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">res_structure</span>.<span class="ident">access_token</span>);
+
             <span class="prelude-val">Ok</span>((<span class="ident">res_structure</span>.<span class="ident">user</span>, <span class="ident">res_structure</span>.<span class="ident">wallet</span>))
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">status</span>() <span class="op">==</span> <span class="ident">StatusCode</span>::<span class="ident">BAD_REQUEST</span> {
+            <span class="kw">let</span> <span class="ident">err_response</span>: <span class="ident">ErrResponse</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">json</span>().<span class="ident">context</span>(<span class="ident">ApiError</span>::<span class="ident">ParseResponse</span>)<span class="question-mark">?</span>;
+            <span class="prelude-val">Err</span>(<span class="ident">ApiError</span>::<span class="ident">BadRequest</span> {
+                <span class="ident">message</span>: <span class="ident">err_response</span>.<span class="ident">message</span>,
+                <span class="ident">code</span>: <span class="ident">err_response</span>.<span class="ident">code</span>,
+            }
+            .<span class="ident">into</span>())
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">response</span>.<span class="ident">status</span>() <span class="op">==</span> <span class="ident">StatusCode</span>::<span class="ident">UNAUTHORIZED</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">Unauthorized</span>.<span class="ident">into</span>())
+            <span class="prelude-val">Err</span>(<span class="ident">ApiError</span>::<span class="ident">Unauthorized</span>.<span class="ident">into</span>())
         } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">Other</span> {
+            <span class="prelude-val">Err</span>(<span class="ident">ApiError</span>::<span class="ident">Other</span> {
                 <span class="ident">status_code</span>: <span class="ident">response</span>.<span class="ident">status</span>(),
             }
             .<span class="ident">into</span>())

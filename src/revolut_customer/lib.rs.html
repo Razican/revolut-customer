@@ -234,6 +234,55 @@
 <span id="234">234</span>
 <span id="235">235</span>
 <span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Revolut customer API</span>
 <span class="doccomment">//!</span>
@@ -262,23 +311,16 @@
 <span class="comment">// &lt;https://github.com/colin-kiegel/rust-derive-builder/issues/139&gt;</span>
 <span class="attribute">#![<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">default_trait_access</span>)]</span>
 
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">derive_builder</span>;
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">getset</span>;
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde_derive</span>;
-<span class="attribute">#[<span class="ident">macro_use</span>]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">failure</span>;
-
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">amount</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">private</span>;
 <span class="kw">mod</span> <span class="ident">public</span>;
 
-<span class="kw">use</span> <span class="ident">failure</span>::{<span class="ident">Error</span>, <span class="ident">ResultExt</span>};
+<span class="kw">use</span> <span class="ident">derive_builder</span>::<span class="ident">Builder</span>;
+<span class="kw">use</span> <span class="ident">failure</span>::{<span class="ident">Error</span>, <span class="ident">Fail</span>, <span class="ident">ResultExt</span>};
+<span class="kw">use</span> <span class="ident">getset</span>::{<span class="ident">Getters</span>, <span class="ident">Setters</span>};
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
-<span class="kw">use</span> <span class="ident">reqwest</span>::{<span class="ident">RequestBuilder</span>, <span class="ident">Url</span>};
+<span class="kw">use</span> <span class="ident">reqwest</span>::{<span class="ident">RequestBuilder</span>, <span class="ident">StatusCode</span>, <span class="ident">Url</span>};
+<span class="kw">use</span> <span class="ident">serde</span>::<span class="ident">Deserialize</span>;
 <span class="kw">use</span> <span class="ident">uuid</span>::<span class="ident">Uuid</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">amount</span>::<span class="ident">Amount</span>;
@@ -287,6 +329,54 @@
     <span class="doccomment">/// Base URL for the API.</span>
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">BASE_API_URL</span>: <span class="ident">Url</span> <span class="op">=</span> <span class="ident">Url</span>::<span class="ident">parse</span>(<span class="string">&quot;https://api.revolut.com/&quot;</span>)
                                     .<span class="ident">expect</span>(<span class="string">&quot;error parsing the base API URL&quot;</span>);
+}
+
+<span class="doccomment">/// API error.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Fail</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">variant_size_differences</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ApiError</span> {
+    <span class="doccomment">/// Unauthorized use of the API.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(<span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;unauthorized use of the API&quot;</span>)]</span>
+    <span class="ident">Unauthorized</span>,
+    <span class="doccomment">/// The client had not logged in.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(<span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;the client had not logged in&quot;</span>)]</span>
+    <span class="ident">NotLoggedIn</span>,
+    <span class="doccomment">/// Invalid user ID.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(<span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;the provided user ID is not a valid UUID&quot;</span>)]</span>
+    <span class="ident">InvalidUserId</span>,
+    <span class="doccomment">/// Failure performing the request.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(<span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;failure performing the request&quot;</span>)]</span>
+    <span class="ident">RequestFailure</span>,
+    <span class="doccomment">/// The request was not correctly formed.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(
+        <span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;the request was not correctly formed. (message: {}, code: {:?})&quot;</span>,
+        <span class="ident">message</span>, <span class="ident">code</span>
+    )]</span>
+    <span class="ident">BadRequest</span> {
+        <span class="doccomment">/// Error description.</span>
+        <span class="ident">message</span>: <span class="ident">String</span>,
+        <span class="doccomment">/// Revolut&#39;s error code</span>
+        <span class="ident">code</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>,
+    },
+    <span class="doccomment">/// The request failed for an unknown reason.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(
+        <span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;request failed for an unknown reason (status code: {})&quot;</span>,
+        <span class="ident">status_code</span>
+    )]</span>
+    <span class="ident">Other</span> {
+        <span class="doccomment">/// Status code of the API response.</span>
+        <span class="ident">status_code</span>: <span class="ident">StatusCode</span>,
+    },
+    <span class="doccomment">/// Error parsing the API response.</span>
+    <span class="attribute">#[<span class="ident">fail</span>(<span class="ident">display</span> <span class="op">=</span> <span class="string">&quot;could not parse the response&quot;</span>)]</span>
+    <span class="ident">ParseResponse</span>,
+}
+
+<span class="doccomment">/// Error response.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Deserialize</span>)]</span>
+<span class="kw">struct</span> <span class="ident">ErrResponse</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">message</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">code</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// Options for the client configuration.</span>
@@ -316,8 +406,8 @@
             <span class="ident">client_version</span>: <span class="string">&quot;5.29&quot;</span>.<span class="ident">to_owned</span>(),
             <span class="ident">api_version</span>: <span class="string">&quot;1&quot;</span>.<span class="ident">to_owned</span>(),
             <span class="ident">device_id</span>: <span class="string">&quot;SOME-DEVICE-ID&quot;</span>.<span class="ident">to_owned</span>(),
-            <span class="ident">device_model</span>: <span class="string">&quot;&quot;</span>.<span class="ident">to_owned</span>(),
-            <span class="ident">user_agent</span>: <span class="string">&quot;&quot;</span>.<span class="ident">to_owned</span>(),
+            <span class="ident">device_model</span>: <span class="string">&quot;iPhone8,1&quot;</span>.<span class="ident">to_owned</span>(),
+            <span class="ident">user_agent</span>: <span class="string">&quot;Revolut/com.revolut.revolut (iPhone; iOS 11.1)&quot;</span>.<span class="ident">to_owned</span>(),
         }
     }
 }
@@ -325,18 +415,16 @@
 <span class="kw">impl</span> <span class="ident">Options</span> {
     <span class="doccomment">/// Gets the default iPhone options.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">iphone</span>() <span class="op">-&gt;</span> <span class="self">Self</span> {
-        <span class="self">Self</span> {
-            <span class="ident">device_model</span>: <span class="string">&quot;iPhone8,1&quot;</span>.<span class="ident">to_owned</span>(), <span class="comment">// TODO: get a valid Android device model</span>
-            <span class="ident">user_agent</span>: <span class="string">&quot;Revolut/com.revolut.revolut (iPhone; iOS 11.1)&quot;</span>.<span class="ident">to_owned</span>(), <span class="comment">// TODO: get a valid Android user agent</span>
-            ..<span class="self">Self</span>::<span class="ident">default</span>()
-        }
+        <span class="self">Self</span>::<span class="ident">default</span>()
     }
 
     <span class="doccomment">/// Gets the default Android options.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">android</span>() <span class="op">-&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">device_model</span>: <span class="string">&quot;&quot;</span>.<span class="ident">to_owned</span>(), <span class="comment">// TODO: get a valid Android device model</span>
-            <span class="ident">user_agent</span>: <span class="string">&quot;&quot;</span>.<span class="ident">to_owned</span>(),   <span class="comment">// TODO: get a valid Android user agent</span>
+            <span class="comment">// TODO: get a valid Android device model</span>
+            <span class="ident">device_model</span>: <span class="string">&quot;android&quot;</span>.<span class="ident">to_owned</span>(),
+            <span class="comment">// TODO: get a valid Android user agent</span>
+            <span class="ident">user_agent</span>: <span class="string">&quot;Revolut/com.revolut.revolut (android)&quot;</span>.<span class="ident">to_owned</span>(),
             ..<span class="self">Self</span>::<span class="ident">default</span>()
         }
     }
@@ -364,7 +452,7 @@
 <span class="doccomment">/// Accept: application/json</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// The client sets the following defaults for the iPhone configuration:</span>
+<span class="doccomment">/// The client sets the following defaults for the default (iPhone) configuration:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// ```text</span>
 <span class="doccomment">/// X-Client-Version: 5.29</span>
@@ -430,10 +518,20 @@
             <span class="ident">user_id</span>
                 .<span class="ident">as_ref</span>()
                 .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">Uuid</span><span class="op">&gt;</span>()
-                .<span class="ident">context</span>(<span class="ident">error</span>::<span class="ident">Api</span>::<span class="ident">InvalidUserId</span>)<span class="question-mark">?</span>,
+                .<span class="ident">context</span>(<span class="ident">ApiError</span>::<span class="ident">InvalidUserId</span>)<span class="question-mark">?</span>,
         );
         <span class="self">self</span>.<span class="ident">access_token</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">access_token</span>.<span class="ident">into</span>());
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Gets the logged in access token.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">user_id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Uuid</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">user_id</span>
+    }
+
+    <span class="doccomment">/// Gets the logged in access token.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">access_token</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">String</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">access_token</span>.<span class="ident">as_ref</span>()
     }
 
     <span class="doccomment">/// Removes the user authentication information.</span>
