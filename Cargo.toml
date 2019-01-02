@@ -4,11 +4,12 @@ version = "0.0.1"
 license = "MIT/Apache-2.0"
 authors = ["Razican <razican@protonmail.ch>"]
 edition = "2018"
-repository = "https://github.com/Razican/revolut-customer"
-description = """
-Reverse engineered Revolut customer API.
-"""
-keywords = ["revolut", "api"]
+readme = "README.md"
+documentation = "https://docs.rs/revolut_customer/"
+repository = "https://github.com/Razican/revolut-customer/"
+homepage = "https://www.revolut.com/"
+description = "Reverse engineered Revolut customer API."
+keywords = ["revolut", "api", "customer"]
 categories = ["api-bindings"]
 
 [badges]
