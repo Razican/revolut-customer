@@ -11,7 +11,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Foo</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Default</span> {
     <span class="doccomment">/// Doc comments are supported!</span>
     <span class="doccomment">/// Multiline, even.</span>
-    <span class="attribute">#[<span class="ident">get</span>]</span> <span class="attribute">#[<span class="ident">set</span>]</span> <span class="attribute">#[<span class="ident">get_mut</span>]</span>
+    <span class="attribute">#[<span class="ident">get</span>]</span> <span class="attribute">#[<span class="ident">deref</span>]</span> <span class="attribute">#[<span class="ident">set</span>]</span> <span class="attribute">#[<span class="ident">get_mut</span>]</span>
     <span class="ident">private</span>: <span class="ident">T</span>,
 
     <span class="doccomment">/// Doc comments are supported!</span>
@@ -24,7 +24,7 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">foo</span> <span class="op">=</span> <span class="ident">Foo</span>::<span class="ident">default</span>();
     <span class="ident">foo</span>.<span class="ident">set_private</span>(<span class="number">1</span>);
     (<span class="kw-2">*</span><span class="ident">foo</span>.<span class="ident">private_mut</span>()) <span class="op">+=</span> <span class="number">1</span>;
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">foo</span>.<span class="ident">private</span>(), <span class="number">2</span>);
+    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">foo</span>.<span class="ident">private</span>(), <span class="number">2</span>);
 }</pre>
 </div><h2 id='derives' class='section-header'><a href="#derives">Derive Macros</a></h2>
 <table>

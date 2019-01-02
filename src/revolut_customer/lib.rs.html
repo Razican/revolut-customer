@@ -283,6 +283,21 @@
 <span id="283">283</span>
 <span id="284">284</span>
 <span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Revolut customer API</span>
 <span class="doccomment">//!</span>
@@ -290,6 +305,21 @@
 <span class="doccomment">//! business API. This API is not public, and therefore it&#39;s subject to change.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The HTTP API is documented for each method in the [`Client`](struct.Client.html) type.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```no_run</span>
+<span class="doccomment">//! # use failure::Error;</span>
+<span class="doccomment">//! use revolut_customer::Client;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # fn main() -&gt; Result&lt;(), Error&gt; {</span>
+<span class="doccomment">//! let mut client = Client::default();</span>
+<span class="doccomment">//! client.sign_in(&quot;+1555555555&quot;, &quot;9999&quot;)?;</span>
+<span class="doccomment">//! client.confirm_sign_in(&quot;+1555555555&quot;, &quot;111-111&quot;)?;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! println!(&quot;User ID: {}&quot;, client.user_id().unwrap());</span>
+<span class="doccomment">//! println!(&quot;Access token: {}&quot;, client.access_token().unwrap());</span>
+<span class="doccomment">//! # Ok(())</span>
+<span class="doccomment">//! # }</span>
+<span class="doccomment">//! ```</span>
 
 <span class="attribute">#![<span class="ident">forbid</span>(<span class="ident">anonymous_parameters</span>)]</span>
 <span class="attribute">#![<span class="ident">warn</span>(<span class="ident">clippy</span>::<span class="ident">pedantic</span>)]</span>
