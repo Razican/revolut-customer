@@ -15,7 +15,7 @@ impl Client {
     /// **Example:**
     ///
     /// ```rust
-    /// use revolut_customer::{Client, error};
+    /// use revolut_customer::{Client, ApiError};
     ///
     /// let client = Client::default();
     /// let response = client.sign_in("+1555555555", "9999");
@@ -97,7 +97,7 @@ impl Client {
     /// **Example:**
     ///
     /// ```rust
-    /// use revolut_customer::{Client, error};
+    /// use revolut_customer::{Client, ApiError};
     ///
     /// let mut client = Client::default();
     /// let response = client.confirm_sign_in("+1555555555", "111-111");

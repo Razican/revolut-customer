@@ -137,6 +137,9 @@ impl Client {
     /// **Example:**
     ///
     /// ```rust
+    /// use std::env;
+    /// use revolut_customer::{Client, private::Address};
+    ///
     /// # dotenv::dotenv().ok();
     /// let mut client = Client::default();
     ///
