@@ -2,7 +2,7 @@
 
 use std::env;
 
-use revolut_customer::{error, private::Address, Client};
+use revolut_customer::{private::Address, ApiError, Client};
 
 /// Tests the user sign in.
 #[test]
@@ -18,12 +18,8 @@ fn it_sign_in() {
         response.is_ok()
             || (phone == "+1555555555"
                 && password == "9999"
-                && response
-                    .err()
-                    .unwrap()
-                    .downcast_ref::<error::Api>()
-                    .unwrap()
-                    == &error::Api::Unauthorized)
+                && response.err().unwrap().downcast_ref::<ApiError>().unwrap()
+                    == &ApiError::Unauthorized)
     );
 }
 

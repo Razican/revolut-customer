@@ -6,7 +6,7 @@ use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 
 use super::{User, Wallet};
-use crate::{error, Client, ErrResponse, BASE_API_URL};
+use crate::{ApiError, Client, ErrResponse, BASE_API_URL};
 
 /// Authorization client methods
 impl Client {
@@ -19,8 +19,8 @@ impl Client {
     ///
     /// let client = Client::default();
     /// let response = client.sign_in("+1555555555", "9999");
-    /// assert_eq!(response.err().unwrap().downcast_ref::<error::Api>().unwrap(),
-    ///            &error::Api::Unauthorized);
+    /// assert_eq!(response.err().unwrap().downcast_ref::<ApiError>().unwrap(),
+    ///            &ApiError::Unauthorized);
     /// ```
     ///
     /// Note that the response will be an unauthorized error, since the phone/password combination
@@ -74,14 +74,14 @@ impl Client {
             .set_headers(request_builder)
             .json(&data)
             .send()
-            .context(error::Api::RequestFailure)?;
+            .context(ApiError::RequestFailure)?;
 
         if response.status().is_success() {
             Ok(())
         } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
+            Err(ApiError::Unauthorized.into())
         } else {
-            Err(error::Api::Other {
+            Err(ApiError::Other {
                 status_code: response.status(),
             }
             .into())
@@ -165,26 +165,25 @@ impl Client {
         let request_builder = self.client.post(URL.clone());
         let request_builder = self.set_headers(request_builder).json(&data);
 
-        let mut response = request_builder.send().context(error::Api::RequestFailure)?;
+        let mut response = request_builder.send().context(ApiError::RequestFailure)?;
 
         if response.status().is_success() {
-            let res_structure: SignInResponse =
-                response.json().context(error::Api::ParseResponse)?;
+            let res_structure: SignInResponse = response.json().context(ApiError::ParseResponse)?;
             self.user_id = Some(res_structure.user.id);
             self.access_token = Some(res_structure.access_token);
 
             Ok((res_structure.user, res_structure.wallet))
         } else if response.status() == StatusCode::BAD_REQUEST {
-            let err_response: ErrResponse = response.json().context(error::Api::ParseResponse)?;
-            Err(error::Api::BadRequest {
+            let err_response: ErrResponse = response.json().context(ApiError::ParseResponse)?;
+            Err(ApiError::BadRequest {
                 message: err_response.message,
                 code: err_response.code,
             }
             .into())
         } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
+            Err(ApiError::Unauthorized.into())
         } else {
-            Err(error::Api::Other {
+            Err(ApiError::Other {
                 status_code: response.status(),
             }
             .into())

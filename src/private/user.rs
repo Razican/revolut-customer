@@ -9,7 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 use super::{Address, User, Wallet};
-use crate::{amount::Amount, error, Client, ErrResponse, BASE_API_URL};
+use crate::{amount::Amount, ApiError, Client, ErrResponse, BASE_API_URL};
 
 /// User client methods.
 ///
@@ -42,22 +42,22 @@ impl Client {
                 .header(ACCEPT, "application/json")
                 .basic_auth(&user_id, Some(access_token))
                 .send()
-                .context(error::Api::RequestFailure)?;
+                .context(ApiError::RequestFailure)?;
 
             if response.status().is_success() {
                 let res_structure: CurrentUserResponse =
-                    response.json().context(error::Api::ParseResponse)?;
+                    response.json().context(ApiError::ParseResponse)?;
                 Ok((res_structure.user, res_structure.wallet))
             } else if response.status() == StatusCode::UNAUTHORIZED {
-                Err(error::Api::Unauthorized.into())
+                Err(ApiError::Unauthorized.into())
             } else {
-                Err(error::Api::Other {
+                Err(ApiError::Other {
                     status_code: response.status(),
                 }
                 .into())
             }
         } else {
-            Err(error::Api::NotLoggedIn.into())
+            Err(ApiError::NotLoggedIn.into())
         }
     }
 
@@ -78,20 +78,20 @@ impl Client {
                 .header(ACCEPT, "application/json")
                 .basic_auth(user_id, Some(&access_token))
                 .send()
-                .context(error::Api::RequestFailure)?;
+                .context(ApiError::RequestFailure)?;
 
             if response.status().is_success() {
-                Ok(response.json().context(error::Api::ParseResponse)?)
+                Ok(response.json().context(ApiError::ParseResponse)?)
             } else if response.status() == StatusCode::UNAUTHORIZED {
-                Err(error::Api::Unauthorized.into())
+                Err(ApiError::Unauthorized.into())
             } else {
-                Err(error::Api::Other {
+                Err(ApiError::Other {
                     status_code: response.status(),
                 }
                 .into())
             }
         } else {
-            Err(error::Api::NotLoggedIn.into())
+            Err(ApiError::NotLoggedIn.into())
         }
     }
 
@@ -112,20 +112,20 @@ impl Client {
                 .header(ACCEPT, "application/json")
                 .basic_auth(user_id, Some(&access_token))
                 .send()
-                .context(error::Api::RequestFailure)?;
+                .context(ApiError::RequestFailure)?;
 
             if response.status().is_success() {
-                Ok(response.json().context(error::Api::ParseResponse)?)
+                Ok(response.json().context(ApiError::ParseResponse)?)
             } else if response.status() == StatusCode::UNAUTHORIZED {
-                Err(error::Api::Unauthorized.into())
+                Err(ApiError::Unauthorized.into())
             } else {
-                Err(error::Api::Other {
+                Err(ApiError::Other {
                     status_code: response.status(),
                 }
                 .into())
             }
         } else {
-            Err(error::Api::NotLoggedIn.into())
+            Err(ApiError::NotLoggedIn.into())
         }
     }
 
@@ -219,28 +219,27 @@ impl Client {
                 .basic_auth(user_id, Some(&access_token))
                 .json(&SentData { address })
                 .send()
-                .context(error::Api::RequestFailure)?;
+                .context(ApiError::RequestFailure)?;
 
             if response.status().is_success() {
                 Ok(())
             } else if response.status() == StatusCode::UNAUTHORIZED {
-                Err(error::Api::Unauthorized.into())
+                Err(ApiError::Unauthorized.into())
             } else if response.status() == StatusCode::BAD_REQUEST {
-                let err_response: ErrResponse =
-                    response.json().context(error::Api::ParseResponse)?;
-                Err(error::Api::BadRequest {
+                let err_response: ErrResponse = response.json().context(ApiError::ParseResponse)?;
+                Err(ApiError::BadRequest {
                     code: err_response.code,
                     message: err_response.message,
                 }
                 .into())
             } else {
-                Err(error::Api::Other {
+                Err(ApiError::Other {
                     status_code: response.status(),
                 }
                 .into())
             }
         } else {
-            Err(error::Api::NotLoggedIn.into())
+            Err(ApiError::NotLoggedIn.into())
         }
     }
 }

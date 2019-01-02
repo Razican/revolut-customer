@@ -26,15 +26,14 @@
 #![allow(clippy::default_trait_access)]
 
 pub mod amount;
-pub mod error;
 pub mod private;
 mod public;
 
 use derive_builder::Builder;
-use failure::{Error, ResultExt};
+use failure::{Error, Fail, ResultExt};
 use getset::{Getters, Setters};
 use lazy_static::lazy_static;
-use reqwest::{RequestBuilder, Url};
+use reqwest::{RequestBuilder, StatusCode, Url};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -44,6 +43,47 @@ lazy_static! {
     /// Base URL for the API.
     static ref BASE_API_URL: Url = Url::parse("https://api.revolut.com/")
                                     .expect("error parsing the base API URL");
+}
+
+/// API error.
+#[derive(Debug, Clone, Fail, PartialEq)]
+#[allow(variant_size_differences)]
+pub enum ApiError {
+    /// Unauthorized use of the API.
+    #[fail(display = "unauthorized use of the API")]
+    Unauthorized,
+    /// The client had not logged in.
+    #[fail(display = "the client had not logged in")]
+    NotLoggedIn,
+    /// Invalid user ID.
+    #[fail(display = "the provided user ID is not a valid UUID")]
+    InvalidUserId,
+    /// Failure performing the request.
+    #[fail(display = "failure performing the request")]
+    RequestFailure,
+    /// The request was not correctly formed.
+    #[fail(
+        display = "the request was not correctly formed. (message: {}, code: {:?})",
+        message, code
+    )]
+    BadRequest {
+        /// Error description.
+        message: String,
+        /// Revolut's error code
+        code: Option<i32>,
+    },
+    /// The request failed for an unknown reason.
+    #[fail(
+        display = "request failed for an unknown reason (status code: {})",
+        status_code
+    )]
+    Other {
+        /// Status code of the API response.
+        status_code: StatusCode,
+    },
+    /// Error parsing the API response.
+    #[fail(display = "could not parse the response")]
+    ParseResponse,
 }
 
 /// Error response.
@@ -192,7 +232,7 @@ impl Client {
             user_id
                 .as_ref()
                 .parse::<Uuid>()
-                .context(error::Api::InvalidUserId)?,
+                .context(ApiError::InvalidUserId)?,
         );
         self.access_token = Some(access_token.into());
         Ok(())
