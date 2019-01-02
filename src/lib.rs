@@ -4,6 +4,21 @@
 //! business API. This API is not public, and therefore it's subject to change.
 //!
 //! The HTTP API is documented for each method in the [`Client`](struct.Client.html) type.
+//!
+//! ```no_run
+//! # use failure::Error;
+//! use revolut_customer::Client;
+//!
+//! # fn main() -> Result<(), Error> {
+//! let mut client = Client::default();
+//! client.sign_in("+1555555555", "9999")?;
+//! client.confirm_sign_in("+1555555555", "111-111")?;
+//!
+//! println!("User ID: {}", client.user_id().unwrap());
+//! println!("Access token: {}", client.access_token().unwrap());
+//! # Ok(())
+//! # }
+//! ```
 
 #![forbid(anonymous_parameters)]
 #![warn(clippy::pedantic)]

@@ -3,7 +3,22 @@
 [![Build Status][build_svg][build_status]
 [![codecov][coverage_svg]][coverage_status]
 
-Reverse engineered, retrieved from <https://github.com/SebastianJ/revolut-api.>
+This crate is meant to interact with the Revolut customer API, not to be confused with the
+business API. This API is not public, and therefore it's subject to change. It has been reverse
+engineered and ported from <https://github.com/SebastianJ/revolut-api>.
+
+**Example:**
+
+```rust
+use revolut_customer::Client;
+
+let mut client = Client::default();
+client.sign_in("+1555555555", "9999")?;
+client.confirm_sign_in("+1555555555", "111-111")?;
+
+println!("User ID: {}", client.user_id().unwrap());
+println!("Access token: {}", client.access_token().unwrap());
+```
 
 [build_svg]: https://travis-ci.org/Razican/revolut-customer.svg?branch=develop
 [build_status]: https://travis-ci.org/Razican/revolut-customer
