@@ -1,6 +1,6 @@
 //! Revolut currency amount
 //!
-//! This module holds the `Amount` type and the `AmountParseError`.
+//! This module holds the `Amount` type and the `ParseError`.
 //!
 //! The maximum and minimum amount values can in any case be known by using `max_value()` and
 //! `min_value()` functions in the `Amount` type, or the `MAX` and `MIN` constants:
@@ -23,9 +23,8 @@ use std::{
     u64,
 };
 
-use failure::{Error, ResultExt};
-
-use crate::error::AmountParse;
+use failure::{Error, Fail, ResultExt};
+use serde::{Deserialize, Serialize};
 
 /// Largest possible currency amount.
 pub const MAX: Amount = Amount::max_value();
@@ -186,13 +185,13 @@ impl FromStr for Amount {
                     let units: u64 = if units_str.is_empty() {
                         0
                     } else {
-                        let u = units_str.parse::<u64>().context(AmountParse {
+                        let u = units_str.parse::<u64>().context(ParseError {
                             amount_str: s.to_owned(),
                         })?;
                         if u <= u64::max_value() / 1_00 {
                             u * 1_00
                         } else {
-                            return Err(AmountParse {
+                            return Err(ParseError {
                                 amount_str: s.to_owned(),
                             }
                             .into());
@@ -201,7 +200,7 @@ impl FromStr for Amount {
                     let mut decimals_str =
                         String::from(split.next().expect("decimals disappeared"));
                     if decimals_str.is_empty() {
-                        return Err(AmountParse {
+                        return Err(ParseError {
                             amount_str: s.to_owned(),
                         }
                         .into());
@@ -210,7 +209,7 @@ impl FromStr for Amount {
                         decimals_str.push('0');
                     }
                     let decimals: u64 = {
-                        let d = decimals_str.parse::<u64>().context(AmountParse {
+                        let d = decimals_str.parse::<u64>().context(ParseError {
                             amount_str: s.to_owned(),
                         })?;
                         if decimals_str.len() == 2 {
@@ -229,26 +228,26 @@ impl FromStr for Amount {
                     if u64::max_value() - decimals >= units {
                         Ok(Self::from_repr(units + decimals))
                     } else {
-                        Err(AmountParse {
+                        Err(ParseError {
                             amount_str: s.to_owned(),
                         }
                         .into())
                     }
                 }
-                _ => Err(AmountParse {
+                _ => Err(ParseError {
                     amount_str: s.to_owned(),
                 }
                 .into()),
             }
         } else {
-            let units = s.parse::<u64>().context(AmountParse {
+            let units = s.parse::<u64>().context(ParseError {
                 amount_str: s.to_owned(),
             })?;
 
             if units <= u64::max_value() / 1_00 {
                 Ok(Self::from_repr(units * 1_00))
             } else {
-                Err(AmountParse {
+                Err(ParseError {
                     amount_str: s.to_owned(),
                 }
                 .into())
@@ -344,4 +343,11 @@ impl SubAssign for Amount {
     fn sub_assign(&mut self, rhs: Self) {
         self.value -= rhs.value
     }
+}
+
+/// Revolut amount parsing error.
+#[derive(Debug, Clone, Fail, PartialEq)]
+#[fail(display = "the amount {} is not a valid Revolut amount", amount_str)]
+pub struct ParseError {
+    pub(crate) amount_str: String,
 }

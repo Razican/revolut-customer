@@ -16,10 +16,10 @@
     missing_copy_implementations
 )]
 
-use std::{env, io::stdin};
+use std::io::stdin;
 
 use failure::{Error, ResultExt};
-use revolut_customer::{Client, Options, OptionsBuilder};
+use revolut_customer::Client;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -52,7 +52,7 @@ fn run() -> Result<(), Error> {
     println!();
 
     println!("Trying to sign in phone {}", phone);
-    let client = Client::new(get_options());
+    let mut client = Client::default();
     client
         .sign_in(phone.trim(), password.trim())
         .context("error signing in")?;
@@ -66,33 +66,12 @@ fn run() -> Result<(), Error> {
         .context("unable to read the code")?;
     println!();
 
-    println!(
-        "{:?}",
-        client
-            .confirm_sign_in(phone.trim(), code.trim())
-            .context("error confirming the login")?
-    );
+    let _ = client
+        .confirm_sign_in(phone.trim(), code.trim())
+        .context("error confirming the login")?;
+
+    println!("User ID: {}", client.user_id().unwrap());
+    println!("Access token: {}", client.access_token().unwrap());
 
     Ok(())
-}
-
-/// Gets generic options for the tests.
-fn get_options() -> Options {
-    let _ = dotenv::dotenv().ok();
-
-    let client_version = env::var("CLIENT_VERSION").unwrap_or_else(|_| "5.12.1".to_owned());
-    let api_version = env::var("API_VERSION").unwrap_or_else(|_| "1".to_owned());
-    let device_id = env::var("DEVICE_ID").unwrap_or_else(|_| "SOME-DEVICE-ID".to_owned());
-    let device_model = env::var("DEVICE_MODEL").unwrap_or_else(|_| "iPhone8,1".to_owned());
-    let user_agent = env::var("USER_AGENT")
-        .unwrap_or_else(|_| "Revolut/com.revolut.revolut (iPhone; iOS 11.1)".to_owned());
-
-    OptionsBuilder::default()
-        .client_version(client_version)
-        .api_version(api_version)
-        .device_id(device_id)
-        .device_model(device_model)
-        .user_agent(user_agent)
-        .build()
-        .unwrap()
 }

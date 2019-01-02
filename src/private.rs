@@ -1,193 +1,236 @@
 //! Private methods of the client.
 
 use chrono::{DateTime, NaiveDate, Utc};
-use failure::{Error, ResultExt};
-use lazy_static::lazy_static;
-use reqwest::{StatusCode, Url};
-use serde::Deserializer;
+use getset::{Getters, Setters};
+use serde::{Deserialize, Deserializer, Serialize};
+use uuid::Uuid;
 
-use crate::{amount::Amount, error, Client, BASE_API_URL};
+use crate::amount::Amount;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SignInResponse {
-    /// User information.
-    user: User,
-    /// Wallet information.
-    wallet: Wallet,
-    /// Access token.
-    access_token: AccessToken,
-}
-
-/// API Access token.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(transparent)]
-pub struct AccessToken {
-    /// Actual token string.
-    token: String,
-}
-
-/// Public client methods.
-impl Client {
-    /// Signs the user in.
-    pub fn sign_in<PH, PW>(&self, phone: PH, password: PW) -> Result<(), Error>
-    where
-        PH: AsRef<str>,
-        PW: AsRef<str>,
-    {
-        /// Data to send to the endpoint in the JSON body.
-        #[derive(Debug, Serialize)]
-        struct Data<'d> {
-            phone: &'d str,
-            password: &'d str,
-        }
-
-        lazy_static! {
-            /// URL of the endpoint.
-            static ref URL: Url = BASE_API_URL.join("signin").unwrap();
-        }
-
-        let data = Data {
-            phone: phone.as_ref(),
-            password: password.as_ref(),
-        };
-
-        let request_builder = self.client.post(URL.clone());
-
-        let response = self
-            .set_headers(request_builder)
-            .json(&data)
-            .send()
-            .context(error::Api::RequestFailure)?;
-
-        if response.status().is_success() {
-            Ok(())
-        } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
-        } else {
-            Err(error::Api::Other {
-                status_code: response.status(),
-            }
-            .into())
-        }
-    }
-
-    /// Signs the user in.
-    pub fn confirm_sign_in<P, C>(&self, phone: P, code: C) -> Result<SignInResponse, Error>
-    where
-        P: AsRef<str>,
-        C: AsRef<str>,
-    {
-        /// Data to send to the endpoint in the JSON body.
-        #[derive(Debug, Serialize)]
-        struct Data<'d> {
-            phone: &'d str,
-            code: &'d str,
-        }
-
-        lazy_static! {
-            /// URL of the endpoint.
-            static ref URL: Url = BASE_API_URL.join("signin/confirm").unwrap();
-        }
-
-        let data = Data {
-            phone: phone.as_ref(),
-            code: &code.as_ref().replace('-', ""),
-        };
-
-        let request_builder = self.client.post(URL.clone());
-
-        let mut response = self
-            .set_headers(request_builder)
-            .json(&data)
-            .send()
-            .context(error::Api::RequestFailure)?;
-
-        if response.status().is_success() {
-            Ok(response.json().context(error::Api::ParseResponse)?)
-        } else if response.status() == StatusCode::UNAUTHORIZED {
-            Err(error::Api::Unauthorized.into())
-        } else {
-            Err(error::Api::Other {
-                status_code: response.status(),
-            }
-            .into())
-        }
-    }
-}
-
-/// Structure representing an address.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Address {
-    city: String,
-    country: String,
-    postcode: String,
-    region: String,
-    street_line_1: String,
-    street_ine_2: Option<String>,
-}
-
-/// Unknown `sof` structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Sof {
-    state: String,
-}
+mod auth;
+mod exchange;
+mod transactions;
+mod user;
 
 /// User information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
-    id: String,
+    /// User ID.
+    #[get = "pub"]
+    #[deref]
+    id: Uuid,
+    /// User creation date.
+    #[get = "pub"]
+    #[deref]
     #[serde(with = "chrono::serde::ts_milliseconds")]
     created_date: DateTime<Utc>,
+    /// Address of the user.
+    #[get = "pub"]
     address: Address,
+    /// Birth date of the user.
+    #[get = "pub"]
+    #[deref]
     #[serde(deserialize_with = "deserialize_user_birth_date")]
     birth_date: NaiveDate,
+    /// First name of the user.
+    #[get = "pub"]
     first_name: String,
+    /// Last name of the user.
+    #[get = "pub"]
     last_name: String,
-    phone: String,
-    email: String,
+    /// Phone of the user.
+    #[get = "pub"]
+    phone: String, // TODO: properly parse
+    /// Email of the user.
+    #[get = "pub"]
+    email: String, // TODO: struct Email
+    /// Wether the email is verified
+    #[get = "pub"]
+    #[deref]
     email_verified: bool,
-    state: String,
+    /// State of the user.
+    #[get = "pub"]
+    state: String, // TODO: enum
+    /// Referral code.
+    #[get = "pub"]
     referral_code: String,
+    /// Unknown.
+    #[get = "pub"]
     kyc: String,
+    /// Accepted terms and conditions version.
+    #[get = "pub"]
     terms_version: String,
+    /// Wether the user is under review.
+    #[get = "pub"]
+    #[deref]
     under_review: bool,
+    /// Wether the user risk has been assessed (unknown meaning.)
+    #[get = "pub"]
+    #[deref]
     risk_assessed: bool,
-    locale: String,
+    /// Locale of the user.
+    #[get = "pub"]
+    locale: String, // TODO: enum
+    /// Unknown "sof" structure.
+    #[get = "pub"]
     sof: Sof,
 }
 
-/// Pocket information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+/// Structure representing an address.
+///
+/// The structure can be converted back and forward to the JSON representation used by the Revolut
+/// API:
+///
+/// ```json
+/// {
+///     city: "New City",
+///     country: "FR",
+///     postcode: "39325",
+///     region: "NewRegion",
+///     streetLine1: "Street 1, 6",
+///     streetLine2: "Apt. 5",
+/// }
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Getters, Setters)]
 #[serde(rename_all = "camelCase")]
-pub struct Pocket {
-    id: String,
-    #[serde(rename = "type")]
-    pocket_type: String,
-    state: String,
-    currency: String,
-    balance: Amount,
-    blocked_amount: Amount,
-    closed: bool,
-    credit_limit: Amount,
+pub struct Address {
+    /// City of the address.
+    #[get = "pub"]
+    #[set = "pub"]
+    city: String,
+    /// Country of the address.
+    #[get = "pub"]
+    #[set = "pub"]
+    country: String, // TODO: enum
+    /// Post code of the address.
+    #[get = "pub"]
+    #[set = "pub"]
+    postcode: String,
+    /// Region of the address.
+    #[get = "pub"]
+    #[set = "pub"]
+    region: String,
+    /// Street address, line 1.
+    #[get = "pub"]
+    #[set = "pub"]
+    street_line_1: String,
+    /// Street address, line 2.
+    #[get = "pub"]
+    #[set = "pub"]
+    street_line_2: Option<String>,
+}
+
+impl Address {
+    /// Creates a new address.
+    pub fn new<CT, CN, P, R, SL1, SL2>(
+        city: CT,
+        country: CN,
+        postcode: P,
+        region: R,
+        street_line_1: SL1,
+        street_line_2: SL2,
+    ) -> Self
+    where
+        CT: Into<String>,
+        CN: Into<String>,
+        P: Into<String>,
+        R: Into<String>,
+        SL1: Into<String>,
+        SL2: Into<Option<String>>,
+    {
+        Self {
+            city: city.into(),
+            country: country.into(),
+            postcode: postcode.into(),
+            region: region.into(),
+            street_line_1: street_line_1.into(),
+            street_line_2: street_line_2.into(),
+        }
+    }
 }
 
 /// Wallet information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
 #[serde(rename_all = "camelCase")]
 pub struct Wallet {
-    id: String,
+    /// Wallet ID.
+    #[get = "pub"]
+    #[deref]
+    id: Uuid,
+    /// Reference of the wallet.
     #[serde(rename = "ref")]
+    #[get = "pub"]
     reference: String,
+    /// State of the wallet.
+    #[get = "pub"]
     state: String,
-    base_currency: String,
+    /// Base currency of the wallet.
+    #[get = "pub"]
+    base_currency: String, // TODO: enum
+    /// Total topped up since the last reset.
+    #[get = "pub"]
+    #[deref]
     total_topup: Amount,
+    /// Topup reset date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
+    #[get = "pub"]
+    #[deref]
     topup_reset_date: DateTime<Utc>,
+    /// Pockets of the wallet.
     pockets: Box<[Pocket]>,
+}
+
+impl Wallet {
+    /// Pockets of the wallet.
+    pub fn pockets(&self) -> &[Pocket] {
+        &self.pockets
+    }
+}
+
+/// Pocket information structure.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+#[serde(rename_all = "camelCase")]
+pub struct Pocket {
+    /// Pocket ID.
+    #[get = "pub"]
+    #[deref]
+    id: Uuid,
+    /// Pocket type.
+    #[serde(rename = "type")]
+    #[get = "pub"]
+    pocket_type: String,
+    /// State of the pocket.
+    #[get = "pub"]
+    state: String,
+    /// Currency of the pocket.
+    #[get = "pub"]
+    currency: String,
+    /// Balance of the pocket.
+    #[get = "pub"]
+    #[deref]
+    balance: Amount,
+    /// Blocked balance.
+    #[get = "pub"]
+    #[deref]
+    blocked_amount: Amount,
+    /// Wether the pocket is closed.
+    #[get = "pub"]
+    #[deref]
+    closed: bool,
+    /// Credit limit.
+    #[get = "pub"]
+    #[deref]
+    credit_limit: Amount,
+}
+
+/// Unknown `sof` structure.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+#[serde(rename_all = "camelCase")]
+pub struct Sof {
+    /// State of the "sof".
+    #[get = "pub"]
+    state: String,
 }
 
 /// Deserializes the birth date of the user information structure.
@@ -195,39 +238,8 @@ fn deserialize_user_birth_date<'de, D>(de: D) -> Result<NaiveDate, D::Error>
 where
     D: Deserializer<'de>,
 {
-    use serde::de::{SeqAccess, Visitor};
-    use std::fmt;
+    use serde::de::Deserialize;
 
-    struct SeqVisitor;
-
-    impl<'de> Visitor<'de> for SeqVisitor {
-        type Value = (i32, u32, u32);
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("an array of 3 integers")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            use serde::de::Error as SerdeError;
-
-            let mut date = (0_i32, 0_u32, 0_u32);
-            date.0 = seq
-                .next_element()?
-                .ok_or_else(|| A::Error::custom("first integer not found"))?;
-            date.1 = seq
-                .next_element()?
-                .ok_or_else(|| A::Error::custom("second integer not found"))?;
-            date.2 = seq
-                .next_element()?
-                .ok_or_else(|| A::Error::custom("third integer not found"))?;
-
-            Ok(date)
-        }
-    }
-
-    let (year, month, day) = de.deserialize_seq(SeqVisitor)?;
+    let (year, month, day) = <(i32, u32, u32)>::deserialize(de)?;
     Ok(NaiveDate::from_ymd(year, month, day))
 }
