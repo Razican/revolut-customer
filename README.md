@@ -1,6 +1,6 @@
 # Revolut consumer API
 
-[![Build Status][build_svg][build_status]
+[![Build Status][build_svg]][build_status]
 [![codecov][coverage_svg]][coverage_status]
 
 This crate is meant to interact with the Revolut customer API, not to be confused with the
@@ -20,7 +20,7 @@ println!("User ID: {}", client.user_id().unwrap());
 println!("Access token: {}", client.access_token().unwrap());
 ```
 
-[build_svg]: https://travis-ci.org/Razican/revolut-customer.svg?branch=develop
+[build_svg]: https://travis-ci.org/Razican/revolut-customer.svg?branch=master
 [build_status]: https://travis-ci.org/Razican/revolut-customer
-[coverage_svg]: https://codecov.io/gh/Razican/revolut-customer/branch/develop/graph/badge.svg
+[coverage_svg]: https://codecov.io/gh/Razican/revolut-customer/branch/master/graph/badge.svg
 [coverage_status]: https://codecov.io/gh/Razican/revolut-customer
