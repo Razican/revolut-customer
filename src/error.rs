@@ -1,5 +1,6 @@
 //! Error module.
 
+use failure::Fail;
 use reqwest::StatusCode;
 
 /// Revolut amount parse error.
@@ -10,7 +11,8 @@ pub struct AmountParse {
 }
 
 /// API error.
-#[derive(Debug, Clone, Copy, Fail, PartialEq)]
+#[derive(Debug, Clone, Fail, PartialEq)]
+#[allow(variant_size_differences)]
 pub enum Api {
     /// Unauthorized use of the API.
     #[fail(display = "unauthorized use of the API")]
@@ -24,6 +26,17 @@ pub enum Api {
     /// Failure performing the request.
     #[fail(display = "failure performing the request")]
     RequestFailure,
+    /// The request was not correctly formed.
+    #[fail(
+        display = "the request was not correctly formed. (message: {}, code: {:?})",
+        message, code
+    )]
+    BadRequest {
+        /// Error description.
+        message: String,
+        /// Revolut's error code
+        code: Option<i32>,
+    },
     /// The request failed for an unknown reason.
     #[fail(
         display = "request failed for an unknown reason (status code: {})",

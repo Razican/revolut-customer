@@ -25,23 +25,17 @@
 // <https://github.com/colin-kiegel/rust-derive-builder/issues/139>
 #![allow(clippy::default_trait_access)]
 
-#[macro_use]
-extern crate derive_builder;
-#[macro_use]
-extern crate getset;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate failure;
-
 pub mod amount;
 pub mod error;
 pub mod private;
 mod public;
 
+use derive_builder::Builder;
 use failure::{Error, ResultExt};
+use getset::{Getters, Setters};
 use lazy_static::lazy_static;
 use reqwest::{RequestBuilder, Url};
+use serde::Deserialize;
 use uuid::Uuid;
 
 pub use crate::amount::Amount;
@@ -50,6 +44,13 @@ lazy_static! {
     /// Base URL for the API.
     static ref BASE_API_URL: Url = Url::parse("https://api.revolut.com/")
                                     .expect("error parsing the base API URL");
+}
+
+/// Error response.
+#[derive(Debug, Clone, Deserialize)]
+struct ErrResponse {
+    pub(crate) message: String,
+    pub(crate) code: Option<i32>,
 }
 
 /// Options for the client configuration.
@@ -79,8 +80,8 @@ impl Default for Options {
             client_version: "5.29".to_owned(),
             api_version: "1".to_owned(),
             device_id: "SOME-DEVICE-ID".to_owned(),
-            device_model: "".to_owned(),
-            user_agent: "".to_owned(),
+            device_model: "iPhone8,1".to_owned(),
+            user_agent: "Revolut/com.revolut.revolut (iPhone; iOS 11.1)".to_owned(),
         }
     }
 }
@@ -88,18 +89,16 @@ impl Default for Options {
 impl Options {
     /// Gets the default iPhone options.
     pub fn iphone() -> Self {
-        Self {
-            device_model: "iPhone8,1".to_owned(), // TODO: get a valid Android device model
-            user_agent: "Revolut/com.revolut.revolut (iPhone; iOS 11.1)".to_owned(), // TODO: get a valid Android user agent
-            ..Self::default()
-        }
+        Self::default()
     }
 
     /// Gets the default Android options.
     pub fn android() -> Self {
         Self {
-            device_model: "".to_owned(), // TODO: get a valid Android device model
-            user_agent: "".to_owned(),   // TODO: get a valid Android user agent
+            // TODO: get a valid Android device model
+            device_model: "android".to_owned(),
+            // TODO: get a valid Android user agent
+            user_agent: "Revolut/com.revolut.revolut (android)".to_owned(),
             ..Self::default()
         }
     }
@@ -127,7 +126,7 @@ impl Options {
 /// Accept: application/json
 /// ```
 ///
-/// The client sets the following defaults for the iPhone configuration:
+/// The client sets the following defaults for the default (iPhone) configuration:
 ///
 /// ```text
 /// X-Client-Version: 5.29
@@ -197,6 +196,16 @@ impl Client {
         );
         self.access_token = Some(access_token.into());
         Ok(())
+    }
+
+    /// Gets the logged in access token.
+    pub fn user_id(&self) -> Option<Uuid> {
+        self.user_id
+    }
+
+    /// Gets the logged in access token.
+    pub fn access_token(&self) -> Option<&String> {
+        self.access_token.as_ref()
     }
 
     /// Removes the user authentication information.

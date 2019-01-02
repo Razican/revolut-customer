@@ -2,7 +2,7 @@
 
 use std::env;
 
-use revolut_customer::{error, Client};
+use revolut_customer::{error, private::Address, Client};
 
 /// Tests the user sign in.
 #[test]
@@ -46,14 +46,13 @@ fn it_confirm_sign_in() {
 fn it_current_user() {
     let mut client = Client::default();
 
-    let client_id =
-        env::var("TEST_CLIENT_ID").expect("TEST_CLIENT_ID environment variable not set");
+    let user_id = env::var("TEST_USER_ID").expect("TEST_USER_ID environment variable not set");
     let access_token =
         env::var("TEST_ACCESS_TOKEN").expect("TEST_ACCESS_TOKEN environment variable not set");
 
     client
-        .set_auth(client_id, access_token)
-        .expect("invalid client ID");
+        .set_auth(user_id, access_token)
+        .expect("invalid user ID");
     let response = client.current_user();
 
     assert!(response.is_ok());
@@ -65,14 +64,13 @@ fn it_current_user_wallet() {
     dotenv::dotenv().ok();
     let mut client = Client::default();
 
-    let client_id =
-        env::var("TEST_CLIENT_ID").expect("TEST_CLIENT_ID environment variable not set");
+    let user_id = env::var("TEST_USER_ID").expect("TEST_USER_ID environment variable not set");
     let access_token =
         env::var("TEST_ACCESS_TOKEN").expect("TEST_ACCESS_TOKEN environment variable not set");
 
     client
-        .set_auth(client_id, access_token)
-        .expect("invalid client ID");
+        .set_auth(user_id, access_token)
+        .expect("invalid user ID");
     let response = client.current_user_wallet();
 
     assert!(response.is_ok());
@@ -84,17 +82,47 @@ fn it_current_user_cards() {
     dotenv::dotenv().ok();
     let mut client = Client::default();
 
-    let client_id =
-        env::var("TEST_CLIENT_ID").expect("TEST_CLIENT_ID environment variable not set");
+    let user_id = env::var("TEST_USER_ID").expect("TEST_USER_ID environment variable not set");
     let access_token =
         env::var("TEST_ACCESS_TOKEN").expect("TEST_ACCESS_TOKEN environment variable not set");
 
     client
-        .set_auth(client_id, access_token)
-        .expect("invalid client ID");
+        .set_auth(user_id, access_token)
+        .expect("invalid user ID");
 
     let response = client.current_user_cards();
-    eprintln!("{:?}", response);
 
     assert!(response.is_ok());
+}
+
+/// Tests the change of the user address.
+///
+/// It will return the address to the original one after the test.
+#[test]
+fn it_change_current_user_address() {
+    dotenv::dotenv().ok();
+    let mut client = Client::default();
+
+    let user_id = env::var("TEST_USER_ID").expect("TEST_USER_ID environment variable not set");
+    let access_token =
+        env::var("TEST_ACCESS_TOKEN").expect("TEST_ACCESS_TOKEN environment variable not set");
+
+    client
+        .set_auth(user_id, access_token)
+        .expect("invalid user ID");
+
+    let (user, _wallet) = client.current_user().unwrap();
+    let previous_address = user.address();
+
+    let new_address = Address::new("NewCity", "FR", "39325", "NewRegion", "Street 1, 6", None);
+    client.change_current_user_address(&new_address).unwrap();
+
+    let (new_user, _wallet) = client.current_user().unwrap();
+    assert_eq!(new_user.address(), &new_address);
+
+    client
+        .change_current_user_address(previous_address)
+        .unwrap();
+    let (final_user, _wallet) = client.current_user().unwrap();
+    assert_eq!(final_user.address(), previous_address);
 }

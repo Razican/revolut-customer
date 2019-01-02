@@ -19,7 +19,7 @@
 use std::io::stdin;
 
 use failure::{Error, ResultExt};
-use revolut_customer::Client;
+use revolut_customer::{Client, Options};
 
 fn main() {
     if let Err(ref e) = run() {
@@ -52,7 +52,7 @@ fn run() -> Result<(), Error> {
     println!();
 
     println!("Trying to sign in phone {}", phone);
-    let mut client = Client::default();
+    let mut client = Client::with_options(Options::iphone());
     client
         .sign_in(phone.trim(), password.trim())
         .context("error signing in")?;
@@ -66,12 +66,12 @@ fn run() -> Result<(), Error> {
         .context("unable to read the code")?;
     println!();
 
-    println!(
-        "{:?}",
-        client
-            .confirm_sign_in(phone.trim(), code.trim())
-            .context("error confirming the login")?
-    );
+    let _ = client
+        .confirm_sign_in(phone.trim(), code.trim())
+        .context("error confirming the login")?;
+
+    println!("User ID: {}", client.user_id().unwrap());
+    println!("Access token: {}", client.access_token().unwrap());
 
     Ok(())
 }

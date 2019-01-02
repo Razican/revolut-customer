@@ -1,7 +1,8 @@
 //! Private methods of the client.
 
 use chrono::{DateTime, NaiveDate, Utc};
-use serde::Deserializer;
+use getset::{Getters, Setters};
+use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 use crate::amount::Amount;
@@ -77,27 +78,76 @@ pub struct User {
 }
 
 /// Structure representing an address.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+///
+/// The structure can be converted back and forward to the JSON representation used by the Revolut
+/// API:
+///
+/// ```json
+/// {
+///     city: "New City",
+///     country: "FR",
+///     postcode: "39325",
+///     region: "NewRegion",
+///     streetLine1: "Street 1, 6",
+///     streetLine2: "Apt. 5",
+/// }
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, Getters, Setters)]
 #[serde(rename_all = "camelCase")]
 pub struct Address {
     /// City of the address.
     #[get = "pub"]
+    #[set = "pub"]
     city: String,
     /// Country of the address.
     #[get = "pub"]
+    #[set = "pub"]
     country: String, // TODO: enum
     /// Post code of the address.
     #[get = "pub"]
+    #[set = "pub"]
     postcode: String,
     /// Region of the address.
     #[get = "pub"]
+    #[set = "pub"]
     region: String,
     /// Street address, line 1.
     #[get = "pub"]
+    #[set = "pub"]
     street_line_1: String,
     /// Street address, line 2.
     #[get = "pub"]
-    street_ine_2: Option<String>,
+    #[set = "pub"]
+    street_line_2: Option<String>,
+}
+
+impl Address {
+    /// Creates a new address.
+    pub fn new<CT, CN, P, R, SL1, SL2>(
+        city: CT,
+        country: CN,
+        postcode: P,
+        region: R,
+        street_line_1: SL1,
+        street_line_2: SL2,
+    ) -> Self
+    where
+        CT: Into<String>,
+        CN: Into<String>,
+        P: Into<String>,
+        R: Into<String>,
+        SL1: Into<String>,
+        SL2: Into<Option<String>>,
+    {
+        Self {
+            city: city.into(),
+            country: country.into(),
+            postcode: postcode.into(),
+            region: region.into(),
+            street_line_1: street_line_1.into(),
+            street_line_2: street_line_2.into(),
+        }
+    }
 }
 
 /// Wallet information structure.

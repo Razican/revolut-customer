@@ -24,6 +24,7 @@ use std::{
 };
 
 use failure::{Error, ResultExt};
+use serde::{Deserialize, Serialize};
 
 use crate::error::AmountParse;
 

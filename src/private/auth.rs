@@ -3,9 +3,10 @@
 use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use reqwest::{StatusCode, Url};
+use serde::{Deserialize, Serialize};
 
 use super::{User, Wallet};
-use crate::{error, Client, BASE_API_URL};
+use crate::{error, Client, ErrResponse, BASE_API_URL};
 
 /// Authorization client methods
 impl Client {
@@ -127,9 +128,6 @@ impl Client {
     /// object containing the user, wallet and access token for the user si returned. The
     /// implementation only returns the user and wallet objects, and saves the access token and
     /// user ID to authenticate in future requests.
-    ///
-    /// The definitions for these objects is shown in the methods that specifically return each of
-    /// the types.
     pub fn confirm_sign_in<P, C>(&mut self, phone: P, code: C) -> Result<(User, Wallet), Error>
     where
         P: AsRef<str>,
@@ -174,7 +172,15 @@ impl Client {
                 response.json().context(error::Api::ParseResponse)?;
             self.user_id = Some(res_structure.user.id);
             self.access_token = Some(res_structure.access_token);
+
             Ok((res_structure.user, res_structure.wallet))
+        } else if response.status() == StatusCode::BAD_REQUEST {
+            let err_response: ErrResponse = response.json().context(error::Api::ParseResponse)?;
+            Err(error::Api::BadRequest {
+                message: err_response.message,
+                code: err_response.code,
+            }
+            .into())
         } else if response.status() == StatusCode::UNAUTHORIZED {
             Err(error::Api::Unauthorized.into())
         } else {

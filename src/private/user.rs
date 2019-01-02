@@ -2,13 +2,14 @@
 
 use chrono::{DateTime, NaiveDate, Utc};
 use failure::{Error, ResultExt};
+use getset::Getters;
 use lazy_static::lazy_static;
 use reqwest::{header::ACCEPT, StatusCode, Url};
-use serde::Deserializer;
+use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
 use super::{Address, User, Wallet};
-use crate::{amount::Amount, error, Client, BASE_API_URL};
+use crate::{amount::Amount, error, Client, ErrResponse, BASE_API_URL};
 
 /// User client methods.
 ///
@@ -113,12 +114,125 @@ impl Client {
                 .send()
                 .context(error::Api::RequestFailure)?;
 
-            //panic!("{}", response.text().unwrap());
-
             if response.status().is_success() {
                 Ok(response.json().context(error::Api::ParseResponse)?)
             } else if response.status() == StatusCode::UNAUTHORIZED {
                 Err(error::Api::Unauthorized.into())
+            } else {
+                Err(error::Api::Other {
+                    status_code: response.status(),
+                }
+                .into())
+            }
+        } else {
+            Err(error::Api::NotLoggedIn.into())
+        }
+    }
+
+    /// Changes the address of the current user.
+    ///
+    /// This method will set the address of the user to the given one. **Note**: Make sure the
+    /// client has the authentication information.
+    ///
+    /// **Example:**
+    ///
+    /// ```rust
+    /// # dotenv::dotenv().ok();
+    /// let mut client = Client::default();
+    ///
+    /// let user_id = env::var("TEST_USER_ID")
+    ///     .expect("TEST_USER_ID environment variable not set");
+    /// let access_token = env::var("TEST_ACCESS_TOKEN")
+    ///     .expect("TEST_ACCESS_TOKEN environment variable not set");
+    ///
+    /// client
+    ///    .set_auth(user_id, access_token)
+    ///    .expect("invalid user ID");
+    ///
+    /// # let (user, _wallet) = client.current_user().unwrap();
+    /// # let previous_address = user.address();
+    ///
+    /// let new_address = Address::new(
+    ///     "NewCity",
+    ///     "FR",
+    ///     "39325",
+    ///     "NewRegion",
+    ///     "Street 1, 6",
+    ///     None);
+    /// client.change_current_user_address(&new_address).unwrap();
+    ///
+    /// let (new_user, _wallet) = client.current_user().unwrap();
+    /// assert_eq!(new_user.address(), &new_address);
+    ///
+    /// # client
+    /// #   .change_current_user_address(previous_address)
+    /// #   .unwrap();
+    /// # let (final_user, _wallet) = client.current_user().unwrap();
+    /// # assert_eq!(final_user.address(), previous_address);
+    /// ```
+    ///
+    /// Note that the response will be a 400 error, since the phone/code combination is not correct.
+    ///
+    /// ## Request API specification
+    ///
+    /// No authentication required.
+    ///
+    /// ```text
+    /// GET https://api.revolut.com/signin/confirm
+    /// ```
+    ///
+    /// **Body (JSON encoded):**
+    ///
+    /// ```json
+    /// {
+    ///     "phone": "+1555555555",
+    ///     "code": "111-111"
+    /// }
+    /// ```
+    ///
+    /// The response status code will be in the `2XX` range if the phone/code were correct, or in
+    /// the `4XX` range if they weren't or the API changed. If the response is correct, a JSON
+    /// object containing the user, wallet and access token for the user si returned. The
+    /// implementation only returns the user and wallet objects, and saves the access token and
+    /// user ID to authenticate in future requests.
+    ///
+    /// The definitions for these objects is shown in the methods that specifically return each of
+    /// the types.
+    pub fn change_current_user_address(&self, address: &Address) -> Result<(), Error> {
+        if let (&Some(ref user_id), &Some(ref access_token)) = (&self.user_id, &self.access_token) {
+            /// Data structure to send to the API.
+            #[derive(Debug, Serialize)]
+            struct SentData<'d> {
+                address: &'d Address,
+            }
+
+            lazy_static! {
+                /// URL of the endpoint.
+                static ref URL: Url = BASE_API_URL.join("user/current").unwrap();
+            }
+
+            let request_builder = self.client.patch(URL.clone());
+
+            let mut response = self
+                .set_headers(request_builder)
+                .header(ACCEPT, "application/json")
+                .basic_auth(user_id, Some(&access_token))
+                .json(&SentData { address })
+                .send()
+                .context(error::Api::RequestFailure)?;
+
+            if response.status().is_success() {
+                Ok(())
+            } else if response.status() == StatusCode::UNAUTHORIZED {
+                Err(error::Api::Unauthorized.into())
+            } else if response.status() == StatusCode::BAD_REQUEST {
+                let err_response: ErrResponse =
+                    response.json().context(error::Api::ParseResponse)?;
+                Err(error::Api::BadRequest {
+                    code: err_response.code,
+                    message: err_response.message,
+                }
+                .into())
             } else {
                 Err(error::Api::Other {
                     status_code: response.status(),
