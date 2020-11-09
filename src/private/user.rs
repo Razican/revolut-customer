@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, NaiveDate, Utc};
 use failure::{Error, ResultExt};
-use getset::Getters;
+use getset::{CopyGetters, Getters};
 use lazy_static::lazy_static;
 use reqwest::{header::ACCEPT, StatusCode, Url};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -248,16 +248,14 @@ impl Client {
 }
 
 /// Credit card representation.
-#[derive(Debug, Clone, PartialEq, Deserialize, Getters)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getters, CopyGetters)]
 #[serde(rename_all = "camelCase")]
 pub struct Card {
     /// Card ID.
-    #[get]
-    #[deref]
+    #[get_copy]
     id: Uuid,
     /// Owner's user ID.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     owner_id: Uuid,
     /// Last four digits of the card.
     #[get = "pub"]
@@ -267,16 +265,13 @@ pub struct Card {
     brand: String, // TODO: enum
     /// Expiry date of the card.
     #[serde(deserialize_with = "deserialize_card_expiry_date")]
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     expiry_date: NaiveDate, // TODO, only month and year
     /// Wether the card is expired.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     expired: bool,
     /// Unknown.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     three_d_verified: bool,
     /// Address associated with the card.
     #[get = "pub"]
@@ -291,12 +286,10 @@ pub struct Card {
     #[get = "pub"]
     currency: String, // TODO: enum
     /// Wether the card is confirmed.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     confirmed: bool,
     /// Number of attempts performed to confirm the card.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     confirmation_attempts: u8,
     /// Auto-topup status.
     #[get = "pub"]
@@ -306,34 +299,29 @@ pub struct Card {
     auto_topup_reason: String,
     /// Card creation date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     created_date: DateTime<Utc>,
     /// Card update date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     updated_date: DateTime<Utc>,
     /// Type of the associated bank.
     #[get = "pub"]
     associated_bank_type: String, // TODO: enum
     /// Last time used.
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     last_used_date: DateTime<Utc>,
     /// Current topup amount.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     current_topup: Amount, // TODO: Make sure this is an amount
     /// Credit repayment.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     credit_repayment: bool,
 }
 
 /// Credit card issuer information.
-#[derive(Debug, Clone, PartialEq, Deserialize, Getters)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Getters, CopyGetters)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
     /// Bank Identification Number
@@ -343,8 +331,7 @@ pub struct Issuer {
     #[get = "pub"]
     name: Option<String>,
     /// Type of card.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     card_type: CardType,
     /// Brand of the card.
     #[get = "pub"]
@@ -356,16 +343,13 @@ pub struct Issuer {
     #[get = "pub"]
     currency: String, // TODO: enum
     /// Wether the card is supported.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     supported: bool,
     /// Fee for using the card.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     fee: f64,
     /// Wether the postcode is required for operation.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     postcode_required: bool,
 }
 
@@ -385,7 +369,6 @@ where
     D: Deserializer<'de>,
 {
     use chrono::Duration;
-    use serde::de::Deserialize;
 
     /// Naive year-month representation.
     #[derive(Debug, Clone, Copy, Deserialize)]

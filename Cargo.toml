@@ -25,6 +25,7 @@ failure = "0.1.5"
 derive_builder = "0.7.0"
 lazy_static = "1.2.0"
 serde = { version = "1.0.84", features = ["derive"] }
+getset = "0.1.1"
 
 [dependencies.chrono]
 version = "0.4.6"
@@ -33,11 +34,6 @@ features = ["serde"]
 [dependencies.uuid]
 version = "0.7.1"
 features = ["serde"]
-
-[dependencies.getset]
-version = "0.0.6"
-git = "https://github.com/Razican/getset"
-branch = "deref"
 
 [dev-dependencies]
 dotenv = "0.13.0"

@@ -14,6 +14,7 @@ fn it_sign_in() {
     let password = env::var("TEST_PASSWORD").unwrap_or("9999".to_owned());
 
     let response = client.sign_in(&phone, &password);
+
     assert!(
         response.is_ok()
             || (phone == "+1555555555"

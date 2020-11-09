@@ -1,7 +1,7 @@
 //! Private methods of the client.
 
 use chrono::{DateTime, NaiveDate, Utc};
-use getset::{Getters, Setters};
+use getset::{CopyGetters, Getters, Setters};
 use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;
 
@@ -13,24 +13,21 @@ mod transactions;
 mod user;
 
 /// User information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters, CopyGetters)]
 #[serde(rename_all = "camelCase")]
 pub struct User {
     /// User ID.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     id: Uuid,
     /// User creation date.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     #[serde(with = "chrono::serde::ts_milliseconds")]
     created_date: DateTime<Utc>,
     /// Address of the user.
     #[get = "pub"]
     address: Address,
     /// Birth date of the user.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     #[serde(deserialize_with = "deserialize_user_birth_date")]
     birth_date: NaiveDate,
     /// First name of the user.
@@ -46,8 +43,7 @@ pub struct User {
     #[get = "pub"]
     email: String, // TODO: struct Email
     /// Wether the email is verified
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     email_verified: bool,
     /// State of the user.
     #[get = "pub"]
@@ -62,12 +58,10 @@ pub struct User {
     #[get = "pub"]
     terms_version: String,
     /// Wether the user is under review.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     under_review: bool,
     /// Wether the user risk has been assessed (unknown meaning.)
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     risk_assessed: bool,
     /// Locale of the user.
     #[get = "pub"]
@@ -151,12 +145,11 @@ impl Address {
 }
 
 /// Wallet information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters, CopyGetters)]
 #[serde(rename_all = "camelCase")]
 pub struct Wallet {
     /// Wallet ID.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     id: Uuid,
     /// Reference of the wallet.
     #[serde(rename = "ref")]
@@ -169,13 +162,11 @@ pub struct Wallet {
     #[get = "pub"]
     base_currency: String, // TODO: enum
     /// Total topped up since the last reset.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     total_topup: Amount,
     /// Topup reset date.
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     topup_reset_date: DateTime<Utc>,
     /// Pockets of the wallet.
     pockets: Box<[Pocket]>,
@@ -189,12 +180,11 @@ impl Wallet {
 }
 
 /// Pocket information structure.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Getters, CopyGetters)]
 #[serde(rename_all = "camelCase")]
 pub struct Pocket {
     /// Pocket ID.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     id: Uuid,
     /// Pocket type.
     #[serde(rename = "type")]
@@ -207,20 +197,16 @@ pub struct Pocket {
     #[get = "pub"]
     currency: String,
     /// Balance of the pocket.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     balance: Amount,
     /// Blocked balance.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     blocked_amount: Amount,
     /// Wether the pocket is closed.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     closed: bool,
     /// Credit limit.
-    #[get = "pub"]
-    #[deref]
+    #[get_copy = "pub"]
     credit_limit: Amount,
 }
 
@@ -238,8 +224,6 @@ fn deserialize_user_birth_date<'de, D>(de: D) -> Result<NaiveDate, D::Error>
 where
     D: Deserializer<'de>,
 {
-    use serde::de::Deserialize;
-
     let (year, month, day) = <(i32, u32, u32)>::deserialize(de)?;
     Ok(NaiveDate::from_ymd(year, month, day))
 }
